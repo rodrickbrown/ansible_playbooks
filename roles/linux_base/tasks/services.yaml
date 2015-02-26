@@ -1,0 +1,33 @@
+---
+- name: Starting and enabling system services.
+  service: name={{ item }} state=started enabled=yes
+  ignore_errors: true
+  with_items: 
+    - cgconfig
+    - numad
+    - sysstat
+    - rsyslog
+    - auditd 
+    - psacct
+    - kdump
+    - sshd 
+
+- name: Stopping and disabling system services.
+  service: name={{ item }} state=stopped enabled=no
+  ignore_errors: true
+  with_items: 
+    - atd
+    - netfs
+    - ip6tables
+    - iptables 
+    - iscsi
+    - iscsid
+    - netfs
+    - avahi-daemon
+    - cpuspeed
+    - cups
+    - rhnsd
+    - hidd
+    - gpm
+    - irqbalance
+    - pcscd

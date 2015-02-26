@@ -1,0 +1,102 @@
+---
+- name: Install baseline rpm's required for inital host setup
+  yum: name={{ item }} state=present 
+  with_items: 
+    - perf
+    - dropwatch
+    - sysstat.x86_64
+    - tuned-utils
+    - oprofile
+    - numad
+    - libpcap.x86_64
+    - java-1.8.0-openjdk.x86_64
+    - ntp
+    - tuned
+    - python.x86_64
+    - git.x86_64
+    - rsync
+    - iptraf
+    - curl
+    - gcc
+    - gcc-c++
+    - make
+    - screen
+    - vim-enhanced
+    - zlib
+    - pam_ldap
+    - net-snmp
+    - sudo 
+
+#- include: sysctl.yaml
+- name: Updating /etc/motd banner
+  template: src=motd.conf.j2 dest=/etc/motd backup=yes
+
+- name: Updating /etc/ntp.conf settings
+  template: src=ntp.conf.j2 dest=/etc/ntp.conf backup=yes
+
+- name: Adding NIC performance tuning script to /etc/rc3.d/S99nic_tune
+  copy: src=nic_tune.sh dest=/etc/init.d/nic_tune owner=root group=root mode=755
+  register: copy_nic_tune
+- file: src=/etc/init.d/nic_tune dest=/etc/rc3.d/S99nic_tune state=link
+  when: copy_nic_tune | changed
+
+- name: Securing root's homedir chmod 0700 /root 
+  file: path=/root owner=root group=root mode=0700
+
+#- name: Enabling sha512 password algo over default md5
+#command: authconfig --passalgo=sha512 --update
+
+- name: Checking if latency-performance profile is active in tuned-adm
+  shell: /usr/sbin/tuned-adm active | grep latency-performance
+  register: active_profile 
+  ignore_errors: True 
+- name: Setting latency-performance tuned profile to active. 
+  command: /usr/sbin/tuned-adm profile latency-performance 
+  when: active_profile.rc != 0
+
+- name: Changing THP scan time in sys.kernel.mm.transparent_hugepage
+  shell: echo 100 > /sys/kernel/mm/transparent_hugepage/khugepaged/scan_sleep_millisecs
+
+#- name: Increasing  
+- name: Adding ADMIN group to /etc/sudoers
+  lineinfile: "dest=/etc/sudoers state=present line='%ADMIN ALL=(ALL) NOPASSWD: ALL' validate='visudo -cf %s'"
+
+- name: Disable ctrl-atl-delete trigger
+  file: path=/etc/init/control-alt-delete.conf state=absent 
+
+- name: Removing /etc/security/limits.d/90-nproc.conf 
+  file: path=/etc/security/limits.d/90-nproc.conf state=absent 
+
+- name: Disabling acpid power button
+  file: path=/etc/acpi/events/power.conf state=absent
+
+- name: Setting soft nofile in /etc/security/limits.conf (1/2)
+  lineinfile: dest=/etc/security/limits.conf 
+               insertbefore='# End of file'
+               line='*                soft    nofile          32768'
+               state=present
+
+- name: Settting hard nofile in /etc/security/limits.conf (2/2)
+  lineinfile: dest=/etc/security/limits.conf 
+               insertbefore='# End of file'
+               line='*                hard    nofile          65536'
+               state=present
+
+- name: Disabling USB Mass Storage devices. 
+  lineinfile: dest=/etc/modprobe.d/blacklist-usbstorage.conf line="blacklist usb-storage" create=yes
+
+# Startup and Shutdown of services should be the last task to run. 
+- include: services.yaml
+
+#- name: Adding secure mount options in /etc/fstab on ext(3,4) mount points.
+#replace: dest=/etc/fstab 
+    #regexp='^(.*\/[a-zA-Z].*ext.*defaults)\s+((?!nosuid,noexec,nodev).*)$' 
+    #line='\1,nosuid,noexec,nodev,noatime \2' 
+    #backrefs=yes 
+    #state=present
+    #backups=yes
+- name: /etc/fstab secure
+  replace: dest=/etc/fstab
+    regexp='^(.\/[a-zA-Z].*ext.*defaults)((?!,nosuid,noexec,nodev).*)$'
+    replace='\1,nosuid,noexec,nodev \2'
+    backup=yes

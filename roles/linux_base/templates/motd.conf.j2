@@ -1,0 +1,23 @@
+╔═╗╦═╗╔═╗╔═╗╔╦╗╔═╗  ╔╦╗╦═╗╔═╗╔╦╗╦╔╗╔╔═╗
+╠═╝╠╦╝╠═╣║ ╦║║║╠═╣   ║ ╠╦╝╠═╣ ║║║║║║║ ╦
+╩  ╩╚═╩ ╩╚═╝╩ ╩╩ ╩   ╩ ╩╚═╩ ╩═╩╝╩╝╚╝╚═╝
+---------------------------------------
+
+* Hostname: {{ ansible_hostname }}
+* Operating System: {{ ansible_distribution }} {{ ansible_distribution_version }}
+* Kernel: {{ ansible_kernel }}
+{% if ansible_virtualization_role == "guest" %}
+* Server Type: Virtual [{{ ansible_virtualization_type }}] {% else %} 
+* Server Type: Physical
+{% endif %} 
+* CPU: {{ ansible_processor[1] }}
+* CPU Cores: {{ ansible_processor_cores }}
+* Memory: {{ ansible_memtotal_mb }} MB
+* IP Address: {{ ansible_default_ipv4.address }}
+* Default Gateway: {{ ansible_default_ipv4.gateway }}  
+
+---------------------------------------
+This system is restricted to authorized users only!
+For support issues open an IT ticket at - 
+https://pragma/jira
+

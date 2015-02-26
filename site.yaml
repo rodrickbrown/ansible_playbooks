@@ -1,0 +1,8 @@
+---
+# This playbook setups new linux servers from scratch. 
+
+- hosts: pragma
+  user: root
+
+  roles: 
+    - linux_base 
