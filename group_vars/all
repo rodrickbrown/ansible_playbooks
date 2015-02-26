@@ -1,2 +1,2 @@
-ntpserver1: ntp1.pragmatrading.com
-ntpserver2: ntp2.pragmatrading.com
+ntpserver1: ntp1.myhost.com
+ntpserver2: ntp2.myhost.com
